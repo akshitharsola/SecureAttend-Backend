@@ -1,0 +1,1422 @@
+<!-- templates/admin/dashboard.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>SecureAttend Admin Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .tab-content {
+            padding: 20px;
+            border: 1px solid #dee2e6;
+            border-top: none;
+            border-radius: 0 0 5px 5px;
+        }
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            min-width: 300px;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-dark bg-dark">
+        <div class="container">
+            <span class="navbar-brand">SecureAttend Admin</span>
+            <div class="text-light">
+                Logged in as: <strong>{{ user.full_name }}</strong>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Notification area -->
+    <div id="notificationArea"></div>
+
+    <div class="container mt-4">
+        <!-- Tabs -->
+        <ul class="nav nav-tabs" id="adminTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="users-tab" data-bs-toggle="tab" data-bs-target="#users" type="button" role="tab">Users</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="courses-tab" data-bs-toggle="tab" data-bs-target="#courses" type="button" role="tab">Courses</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="rooms-tab" data-bs-toggle="tab" data-bs-target="#rooms" type="button" role="tab">Rooms</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="assignments-tab" data-bs-toggle="tab" data-bs-target="#assignments" type="button" role="tab">Assignments</button>
+            </li>
+        </ul>
+
+        <!-- Tab Content -->
+        <div class="tab-content" id="adminTabsContent">
+            <!-- Users Tab -->
+            <div class="tab-pane fade show active" id="users" role="tabpanel" aria-labelledby="users-tab">
+                <h2>User Management</h2>
+                
+                <!-- Add User Button -->
+                <button type="button" class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#addUserModal">
+                    Add User
+                </button>
+                
+                <!-- Users Table -->
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Role</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="usersList">
+                        <!-- User list will be populated by JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Courses Tab -->
+            <div class="tab-pane fade" id="courses" role="tabpanel" aria-labelledby="courses-tab">
+                <h2>Course Management</h2>
+                
+                <!-- Add Course Button -->
+                <button type="button" class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#addCourseModal">
+                    Add Course
+                </button>
+                
+                <!-- Courses Table -->
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th>Course Code</th>
+                            <th>Course Name</th>
+                            <th>Department</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="coursesList">
+                        <!-- Course list will be populated by JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Rooms Tab -->
+            <div class="tab-pane fade" id="rooms" role="tabpanel" aria-labelledby="rooms-tab">
+                <h2>Room Management</h2>
+                
+                <!-- Add Room Button -->
+                <button type="button" class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#addRoomModal">
+                    Add Room
+                </button>
+                
+                <!-- Rooms Table -->
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th>Room Number</th>
+                            <th>Building</th>
+                            <th>Capacity</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="roomsList">
+                        <!-- Room list will be populated by JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Assignments Tab -->
+            <div class="tab-pane fade" id="assignments" role="tabpanel" aria-labelledby="assignments-tab">
+                <h2>Faculty Course & Room Assignments</h2>
+                
+                <!-- Add Assignment Button -->
+                <button type="button" class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#addAssignmentModal">
+                    Add Assignment
+                </button>
+                
+                <!-- Assignments Table -->
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th>Faculty</th>
+                            <th>Course</th>
+                            <th>Room</th>
+                            <th>Day</th>
+                            <th>Time Slot</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="assignmentsList">
+                        <!-- Assignment list will be populated by JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add User Modal -->
+    <div class="modal fade" id="addUserModal" tabindex="-1" aria-labelledby="addUserModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addUserModalLabel">Add User</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addUserForm">
+                        <div class="mb-3">
+                            <label for="userEmail" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="userEmail" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="userFullName" class="form-label">Full Name</label>
+                            <input type="text" class="form-control" id="userFullName" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="userPassword" class="form-label">Password</label>
+                            <input type="password" class="form-control" id="userPassword" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="userRole" class="form-label">Role</label>
+                            <select class="form-select" id="userRole" required>
+                                <option value="ADMIN">Admin</option>
+                                <option value="FACULTY">Faculty</option>
+                                <option value="STUDENT">Student</option>
+                            </select>
+                        </div>
+                        <div class="mb-3" id="departmentField" style="display: none;">
+                            <label for="userDepartment" class="form-label">Department</label>
+                            <input type="text" class="form-control" id="userDepartment">
+                        </div>
+                        <div class="mb-3" id="rollNumberField" style="display: none;">
+                            <label for="userRollNumber" class="form-label">Roll Number</label>
+                            <input type="text" class="form-control" id="userRollNumber">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="submitAddUser">Add User</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit User Modal -->
+    <div class="modal fade" id="editUserModal" tabindex="-1" aria-labelledby="editUserModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editUserModalLabel">Edit User</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editUserForm">
+                        <input type="hidden" id="editUserId">
+                        <div class="mb-3">
+                            <label for="editUserEmail" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="editUserEmail" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editUserFullName" class="form-label">Full Name</label>
+                            <input type="text" class="form-control" id="editUserFullName" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editUserRole" class="form-label">Role</label>
+                            <select class="form-select" id="editUserRole" required>
+                                <option value="ADMIN">Admin</option>
+                                <option value="FACULTY">Faculty</option>
+                                <option value="STUDENT">Student</option>
+                            </select>
+                        </div>
+                        <div class="mb-3" id="editDepartmentField" style="display: none;">
+                            <label for="editUserDepartment" class="form-label">Department</label>
+                            <input type="text" class="form-control" id="editUserDepartment">
+                        </div>
+                        <div class="mb-3" id="editRollNumberField" style="display: none;">
+                            <label for="editUserRollNumber" class="form-label">Roll Number</label>
+                            <input type="text" class="form-control" id="editUserRollNumber">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="submitEditUser">Save Changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Course Modal -->
+    <div class="modal fade" id="addCourseModal" tabindex="-1" aria-labelledby="addCourseModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addCourseModalLabel">Add Course</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addCourseForm">
+                        <div class="mb-3">
+                            <label for="courseCode" class="form-label">Course Code</label>
+                            <input type="text" class="form-control" id="courseCode" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="courseName" class="form-label">Course Name</label>
+                            <input type="text" class="form-control" id="courseName" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="courseDepartment" class="form-label">Department</label>
+                            <input type="text" class="form-control" id="courseDepartment">
+                        </div>
+                        <div class="mb-3">
+                            <label for="courseDescription" class="form-label">Description</label>
+                            <textarea class="form-control" id="courseDescription" rows="3"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="submitAddCourse">Add Course</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Course Modal -->
+    <div class="modal fade" id="editCourseModal" tabindex="-1" aria-labelledby="editCourseModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editCourseModalLabel">Edit Course</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editCourseForm">
+                        <input type="hidden" id="editCourseId">
+                        <div class="mb-3">
+                            <label for="editCourseCode" class="form-label">Course Code</label>
+                            <input type="text" class="form-control" id="editCourseCode" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editCourseName" class="form-label">Course Name</label>
+                            <input type="text" class="form-control" id="editCourseName" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editCourseDepartment" class="form-label">Department</label>
+                            <input type="text" class="form-control" id="editCourseDepartment">
+                        </div>
+                        <div class="mb-3">
+                            <label for="editCourseDescription" class="form-label">Description</label>
+                            <textarea class="form-control" id="editCourseDescription" rows="3"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="submitEditCourse">Save Changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Room Modal -->
+    <div class="modal fade" id="addRoomModal" tabindex="-1" aria-labelledby="addRoomModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addRoomModalLabel">Add Room</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addRoomForm">
+                        <div class="mb-3">
+                            <label for="roomNumber" class="form-label">Room Number</label>
+                            <input type="text" class="form-control" id="roomNumber" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="roomBuilding" class="form-label">Building</label>
+                            <input type="text" class="form-control" id="roomBuilding">
+                        </div>
+                        <div class="mb-3">
+                            <label for="roomCapacity" class="form-label">Capacity</label>
+                            <input type="number" class="form-control" id="roomCapacity">
+                        </div>
+                        <div class="mb-3">
+                            <label for="roomDescription" class="form-label">Description</label>
+                            <textarea class="form-control" id="roomDescription" rows="3"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="submitAddRoom">Add Room</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Room Modal -->
+    <div class="modal fade" id="editRoomModal" tabindex="-1" aria-labelledby="editRoomModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editRoomModalLabel">Edit Room</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editRoomForm">
+                        <input type="hidden" id="editRoomId">
+                        <div class="mb-3">
+                            <label for="editRoomNumber" class="form-label">Room Number</label>
+                            <input type="text" class="form-control" id="editRoomNumber" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editRoomBuilding" class="form-label">Building</label>
+                            <input type="text" class="form-control" id="editRoomBuilding">
+                        </div>
+                        <div class="mb-3">
+                            <label for="editRoomCapacity" class="form-label">Capacity</label>
+                            <input type="number" class="form-control" id="editRoomCapacity">
+                        </div>
+                        <div class="mb-3">
+                            <label for="editRoomDescription" class="form-label">Description</label>
+                            <textarea class="form-control" id="editRoomDescription" rows="3"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="submitEditRoom">Save Changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Assignment Modal -->
+    <div class="modal fade" id="addAssignmentModal" tabindex="-1" aria-labelledby="addAssignmentModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addAssignmentModalLabel">Add Faculty Assignment</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addAssignmentForm">
+                        <div class="mb-3">
+                            <label for="assignmentFaculty" class="form-label">Faculty</label>
+                            <select class="form-select" id="assignmentFaculty" required>
+                                <!-- Faculty options will be populated by JavaScript -->
+                                <option value="">Select Faculty</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="assignmentCourse" class="form-label">Course</label>
+                            <select class="form-select" id="assignmentCourse" required>
+                                <!-- Course options will be populated by JavaScript -->
+                                <option value="">Select Course</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="assignmentRoom" class="form-label">Room</label>
+                            <select class="form-select" id="assignmentRoom" required>
+                                <!-- Room options will be populated by JavaScript -->
+                                <option value="">Select Room</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Days of Week</label>
+                            <div class="form-check">
+                                <input class="form-check-input day-checkbox" type="checkbox" value="Monday" id="dayMonday">
+                                <label class="form-check-label" for="dayMonday">Monday</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input day-checkbox" type="checkbox" value="Tuesday" id="dayTuesday">
+                                <label class="form-check-label" for="dayTuesday">Tuesday</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input day-checkbox" type="checkbox" value="Wednesday" id="dayWednesday">
+                                <label class="form-check-label" for="dayWednesday">Wednesday</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input day-checkbox" type="checkbox" value="Thursday" id="dayThursday">
+                                <label class="form-check-label" for="dayThursday">Thursday</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input day-checkbox" type="checkbox" value="Friday" id="dayFriday">
+                                <label class="form-check-label" for="dayFriday">Friday</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input day-checkbox" type="checkbox" value="Saturday" id="daySaturday">
+                                <label class="form-check-label" for="daySaturday">Saturday</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input day-checkbox" type="checkbox" value="Sunday" id="daySunday">
+                                <label class="form-check-label" for="daySunday">Sunday</label>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="assignmentTime" class="form-label">Time Slot (optional)</label>
+                            <input type="text" class="form-control" id="assignmentTime" placeholder="e.g., 10:00 AM - 11:30 AM">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="submitAddAssignment">Add Assignment</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Assignment Modal -->
+    <div class="modal fade" id="editAssignmentModal" tabindex="-1" aria-labelledby="editAssignmentModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editAssignmentModalLabel">Edit Faculty Assignment</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editAssignmentForm">
+                        <input type="hidden" id="editAssignmentId">
+                        <div class="mb-3">
+                            <label for="editAssignmentFaculty" class="form-label">Faculty</label>
+                            <select class="form-select" id="editAssignmentFaculty" required>
+                                <!-- Faculty options will be populated by JavaScript -->
+                                <option value="">Select Faculty</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editAssignmentCourse" class="form-label">Course</label>
+                            <select class="form-select" id="editAssignmentCourse" required>
+                                <!-- Course options will be populated by JavaScript -->
+                                <option value="">Select Course</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editAssignmentRoom" class="form-label">Room</label>
+                            <select class="form-select" id="editAssignmentRoom" required>
+                                <!-- Room options will be populated by JavaScript -->
+                                <option value="">Select Room</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Days of Week</label>
+                            <div class="form-check">
+                                <input class="form-check-input edit-day-checkbox" type="checkbox" value="Monday" id="editDayMonday">
+                                <label class="form-check-label" for="editDayMonday">Monday</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input edit-day-checkbox" type="checkbox" value="Tuesday" id="editDayTuesday">
+                                <label class="form-check-label" for="editDayTuesday">Tuesday</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input edit-day-checkbox" type="checkbox" value="Wednesday" id="editDayWednesday">
+                                <label class="form-check-label" for="editDayWednesday">Wednesday</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input edit-day-checkbox" type="checkbox" value="Thursday" id="editDayThursday">
+                                <label class="form-check-label" for="editDayThursday">Thursday</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input edit-day-checkbox" type="checkbox" value="Friday" id="editDayFriday">
+                                <label class="form-check-label" for="editDayFriday">Friday</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input edit-day-checkbox" type="checkbox" value="Saturday" id="editDaySaturday">
+                                <label class="form-check-label" for="editDaySaturday">Saturday</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input edit-day-checkbox" type="checkbox" value="Sunday" id="editDaySunday">
+                                <label class="form-check-label" for="editDaySunday">Sunday</label>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editAssignmentTime" class="form-label">Time Slot (optional)</label>
+                            <input type="text" class="form-control" id="editAssignmentTime" placeholder="e.g., 10:00 AM - 11:30 AM">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="submitEditAssignment">Save Changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap and jQuery Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    
+    <script>
+        $(document).ready(function() {
+            // Get authentication token from localStorage
+            const token = localStorage.getItem('token');
+            // Add this at the beginning of the $(document).ready function
+            let initialDataLoaded = false;
+            // Set up AJAX headers for authentication
+            $.ajaxSetup({
+                beforeSend: function(xhr) {
+                    if (token) {
+                        xhr.setRequestHeader('Authorization', 'Bearer ' + token);
+                    }
+                }
+            });
+            
+            // Enable console logging for debugging
+            const DEBUG = true;
+            function logDebug(message, data) {
+                if (DEBUG) {
+                    console.log(`[DEBUG] ${message}`, data || '');
+                }
+            }
+            
+            // Add this function for user-friendly notifications
+            function showNotification(title, message, type) {
+                // Create notification element
+                const notificationId = 'notification-' + Date.now();
+                const notificationHTML = `
+                    <div id="${notificationId}" class="alert alert-${type} alert-dismissible fade show" 
+                        style="position: fixed; top: 20px; right: 20px; z-index: 9999; min-width: 300px;" role="alert">
+                        <strong>${title}</strong> ${message}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                `;
+                $('body').append(notificationHTML);
+                
+                // Auto-dismiss after 5 seconds
+                setTimeout(() => {
+                    $(`#${notificationId}`).alert('close');
+                }, 5000);
+            }
+            
+            // Enhanced error handling with detailed logging
+            function handleApiError(jqXHR) {
+                console.error("API Error:", jqXHR);
+                
+                let errorMessage = 'An error occurred';
+                if (jqXHR.responseJSON && jqXHR.responseJSON.detail) {
+                    errorMessage = jqXHR.responseJSON.detail;
+                } else if (jqXHR.responseText) {
+                    try {
+                        const errorData = JSON.parse(jqXHR.responseText);
+                        errorMessage = errorData.detail || JSON.stringify(errorData);
+                    } catch (e) {
+                        errorMessage = jqXHR.responseText;
+                    }
+                }
+                
+                showNotification('Error', errorMessage, 'danger');
+            }
+            
+            // Load Users
+            function loadUsers() {
+                logDebug('Loading users...');
+                $.ajax({
+                    url: '/api/v1/users/',
+                    method: 'GET',
+                    success: function(data) {
+                        logDebug('Users data received:', data);
+                        const usersList = $('#usersList');
+                        usersList.empty();
+                        
+                        if (data.users && data.users.length > 0) {
+                            data.users.forEach(function(user) {
+                                usersList.append(`
+                                    <tr>
+                                        <td>${user.full_name}</td>
+                                        <td>${user.email}</td>
+                                        <td>${user.role}</td>
+                                        <td>${user.is_active ? 'Active' : 'Inactive'}</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-primary edit-user" data-id="${user.id}" data-bs-toggle="modal" data-bs-target="#editUserModal">Edit</button>
+                                            <button class="btn btn-sm btn-danger delete-user" data-id="${user.id}">Delete</button>
+                                            ${user.is_active ? 
+                                                `<button class="btn btn-sm btn-warning deactivate-user" data-id="${user.id}">Deactivate</button>` : 
+                                                `<button class="btn btn-sm btn-success activate-user" data-id="${user.id}">Activate</button>`
+                                            }
+                                        </td>
+                                    </tr>
+                                `);
+                            });
+                        } else {
+                            usersList.append('<tr><td colspan="5" class="text-center">No users found</td></tr>');
+                        }
+                        
+                        // Update faculty dropdowns after users are loaded
+                        const facultyUsers = data.users.filter(user => 
+                            user.role === 'FACULTY' && user.is_active
+                        );
+                        updateFacultyDropdowns(facultyUsers);
+                    },
+                    error: function(xhr, status, error) {
+                        console.error("Error loading users:", error, xhr.responseText);
+                        handleApiError(xhr);
+                    }
+                });
+            }
+            
+            // Load Courses
+            function loadCourses() {
+                logDebug('Loading courses...');
+                $.ajax({
+                    url: '/api/v1/courses/',
+                    method: 'GET',
+                    success: function(data) {
+                        logDebug('Courses data received:', data);
+                        const coursesList = $('#coursesList');
+                        coursesList.empty();
+                        
+                        if (data.courses && data.courses.length > 0) {
+                            data.courses.forEach(function(course) {
+                                coursesList.append(`
+                                    <tr>
+                                        <td>${course.course_code}</td>
+                                        <td>${course.course_name}</td>
+                                        <td>${course.department || '-'}</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-primary edit-course" data-id="${course.id}" data-bs-toggle="modal" data-bs-target="#editCourseModal">Edit</button>
+                                            <button class="btn btn-sm btn-danger delete-course" data-id="${course.id}">Delete</button>
+                                        </td>
+                                    </tr>
+                                `);
+                            });
+                        } else {coursesList.append('<tr><td colspan="4" class="text-center">No courses found</td></tr>');
+                        }
+                        
+                        // Update assignment course dropdowns
+                        updateCourseDropdowns(data.courses);
+                    },
+                    error: function(xhr, status, error) {
+                        console.error("Error loading courses:", error, xhr.responseText);
+                        handleApiError(xhr);
+                    }
+                });
+            }
+            
+            // Load Rooms
+            function loadRooms() {
+                logDebug('Loading rooms...');
+                $.ajax({
+                    url: '/api/v1/rooms/',
+                    method: 'GET',
+                    success: function(data) {
+                        logDebug('Rooms data received:', data);
+                        const roomsList = $('#roomsList');
+                        roomsList.empty();
+                        
+                        if (data.rooms && data.rooms.length > 0) {
+                            data.rooms.forEach(function(room) {
+                                roomsList.append(`
+                                    <tr>
+                                        <td>${room.room_number}</td>
+                                        <td>${room.building || '-'}</td>
+                                        <td>${room.capacity || '-'}</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-primary edit-room" data-id="${room.id}" data-bs-toggle="modal" data-bs-target="#editRoomModal">Edit</button>
+                                            <button class="btn btn-sm btn-danger delete-room" data-id="${room.id}">Delete</button>
+                                        </td>
+                                    </tr>
+                                `);
+                            });
+                        } else {
+                            roomsList.append('<tr><td colspan="4" class="text-center">No rooms found</td></tr>');
+                        }
+                        
+                        // Update assignment room dropdowns
+                        updateRoomDropdowns(data.rooms);
+                    },
+                    error: function(xhr, status, error) {
+                        console.error("Error loading rooms:", error, xhr.responseText);
+                        handleApiError(xhr);
+                    }
+                });
+            }
+            
+            // Load Faculty Users for Assignments
+            function loadFacultyUsers() {
+                logDebug('Loading faculty users for assignments...');
+                $.ajax({
+                    url: '/api/v1/users/',
+                    method: 'GET',
+                    success: function(data) {
+                        if (data.users && data.users.length > 0) {
+                            // Extract faculty users
+                            const facultyUsers = data.users.filter(user => 
+                                user.role === 'FACULTY' && user.is_active
+                            );
+                            
+                            logDebug(`Found ${facultyUsers.length} faculty users`, facultyUsers);
+                            
+                            // Update faculty dropdowns
+                            updateFacultyDropdowns(facultyUsers);
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        console.error("Error loading faculty users:", error, xhr.responseText);
+                        handleApiError(xhr);
+                    }
+                });
+            }
+            
+            // Update Faculty Dropdowns
+            function updateFacultyDropdowns(facultyUsers) {
+                const facultySelects = ['#assignmentFaculty', '#editAssignmentFaculty'];
+                
+                facultySelects.forEach(selectId => {
+                    const select = $(selectId);
+                    // Keep the first option and remove the rest
+                    select.find('option:not(:first)').remove();
+                    
+                    facultyUsers.forEach(faculty => {
+                        select.append(`<option value="${faculty.id}">${faculty.full_name}</option>`);
+                    });
+                });
+                
+                logDebug('Faculty dropdowns updated');
+            }
+            
+            // Update Course Dropdowns
+            function updateCourseDropdowns(courses) {
+                const courseSelects = ['#assignmentCourse', '#editAssignmentCourse'];
+                
+                courseSelects.forEach(selectId => {
+                    const select = $(selectId);
+                    // Keep the first option and remove the rest
+                    select.find('option:not(:first)').remove();
+                    
+                    courses.forEach(course => {
+                        select.append(`<option value="${course.id}">${course.course_code} - ${course.course_name}</option>`);
+                    });
+                });
+                
+                logDebug('Course dropdowns updated');
+            }
+            
+            // Update Room Dropdowns
+            function updateRoomDropdowns(rooms) {
+                const roomSelects = ['#assignmentRoom', '#editAssignmentRoom'];
+                
+                roomSelects.forEach(selectId => {
+                    const select = $(selectId);
+                    // Keep the first option and remove the rest
+                    select.find('option:not(:first)').remove();
+                    
+                    rooms.forEach(room => {
+                        select.append(`<option value="${room.id}">${room.room_number}${room.building ? ` (${room.building})` : ''}</option>`);
+                    });
+                });
+                
+                logDebug('Room dropdowns updated');
+            }
+            
+            // Load Assignments
+            function loadAssignments() {
+                logDebug('Loading assignments...');
+                $.ajax({
+                    url: '/api/v1/assignments/',
+                    method: 'GET',
+                    success: function(data) {
+                        logDebug('Assignments data received:', data);
+                        const assignmentsList = $('#assignmentsList');
+                        assignmentsList.empty();
+                        
+                                                if (data.assignments && data.assignments.length > 0) {
+                                data.assignments.forEach(function(assignment) {
+                                    if (assignment.is_active) {
+                                        // Format the days for display
+                                        let daysDisplay = '-';
+                                        if (assignment.day_of_week) {
+                                            // Convert comma-separated days to a readable format
+                                            daysDisplay = assignment.day_of_week.split(',').join(', ');
+                                        }
+                                        
+                                        assignmentsList.append(`
+                                            <tr>
+                                                <td>${assignment.faculty_name || '-'}</td>
+                                                <td>${assignment.course_code ? `${assignment.course_code} - ${assignment.course_name}` : '-'}</td>
+                                                <td>${assignment.room_number || '-'}</td>
+                                                <td>${daysDisplay}</td>
+                                                <td>${assignment.time_slot || '-'}</td>
+                                                <td>
+                                                    <button class="btn btn-sm btn-primary edit-assignment" data-id="${assignment.id}" data-bs-toggle="modal" data-bs-target="#editAssignmentModal">Edit</button>
+                                                    <button class="btn btn-sm btn-danger delete-assignment" data-id="${assignment.id}">Delete</button>
+                                                </td>
+                                            </tr>
+                                        `);
+                                    }
+                                });
+                        } else {
+                            assignmentsList.append('<tr><td colspan="6" class="text-center">No assignments found</td></tr>');
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        console.error("Error loading assignments:", error, xhr.responseText);
+                        handleApiError(xhr);
+                    }
+                });
+            }
+
+            // Modify the initDashboard function
+            function initDashboard() {
+                // Load users data immediately since it's the default tab
+                loadUsers();
+                
+                // Add event handler for tab changes
+                $('#adminTabs a[data-bs-toggle="tab"]').on('shown.bs.tab', function(e) {
+                    const target = $(e.target).attr("data-bs-target");
+                    logDebug(`Tab changed to: ${target}`);
+                    
+                    if (target === "#courses") {
+                        loadCourses();
+                    } else if (target === "#rooms") {
+                        loadRooms();
+                    } else if (target === "#assignments") {
+                        loadFacultyUsers();
+                        loadCourses();
+                        loadRooms();
+                        loadAssignments();
+                    }
+                });
+                
+                // Load all data in the background if not already loaded
+                if (!initialDataLoaded) {
+                    setTimeout(() => {
+                        loadCourses();
+                        loadRooms();
+                        loadFacultyUsers();
+                        loadAssignments();
+                        initialDataLoaded = true;
+                        logDebug('All data loaded in background');
+                    }, 1000); // Small delay to prioritize loading the active tab first
+                }
+    
+                
+                // Set up tab change event to load data when tab is activated
+                $('#adminTabs a[data-bs-toggle="tab"]').on('shown.bs.tab', function(e) {
+                    const target = $(e.target).attr("data-bs-target");
+                    logDebug(`Tab changed to: ${target}`);
+                    
+                    if (target === "#courses") {
+                        loadCourses();
+                    } else if (target === "#rooms") {
+                        loadRooms();
+                    } else if (target === "#assignments") {
+                        loadFacultyUsers();
+                        loadCourses();
+                        loadRooms();
+                        loadAssignments();
+                    }
+                });
+                
+                // Show department field for faculty and roll number field for students
+                $('#userRole').change(function() {
+                    const role = $(this).val();
+                    $('#departmentField').toggle(role === 'FACULTY');
+                    $('#rollNumberField').toggle(role === 'STUDENT');
+                });
+                
+                // Show appropriate fields in edit user modal based on role
+                $('#editUserRole').change(function() {
+                    const role = $(this).val();
+                    $('#editDepartmentField').toggle(role === 'FACULTY');
+                    $('#editRollNumberField').toggle(role === 'STUDENT');
+                });
+            }
+            
+            // Initialize when document is ready
+            initDashboard();
+            
+            // User Management
+            
+            // Add User Form Submission
+            $('#submitAddUser').click(function() {
+                const userData = {
+                    email: $('#userEmail').val(),
+                    full_name: $('#userFullName').val(),
+                    password: $('#userPassword').val(),
+                    role: $('#userRole').val()
+                };
+                
+                // Add department for faculty
+                if (userData.role === 'FACULTY' && $('#userDepartment').val()) {
+                    userData.department = $('#userDepartment').val();
+                }
+                
+                // Add roll number for students
+                if (userData.role === 'STUDENT' && $('#userRollNumber').val()) {
+                    userData.roll_number = $('#userRollNumber').val();
+                }
+                
+                logDebug('Adding user with data:', userData);
+                
+                $.ajax({
+                    url: '/api/v1/users/',
+                    method: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(userData),
+                    success: function() {
+                        $('#addUserModal').modal('hide');
+                        $('#addUserForm')[0].reset();
+                        loadUsers();
+                        showNotification('Success', 'User added successfully!', 'success');
+                    },
+                    error: handleApiError
+                });
+            });
+            
+            // Get User for Editing
+            $(document).on('click', '.edit-user', function() {
+                const userId = $(this).data('id');
+                
+                // Fetch user details
+                $.ajax({
+                    url: `/api/v1/users/${userId}`,
+                    method: 'GET',
+                    success: function(data) {
+                        // Populate form fields
+                        $('#editUserId').val(data.id);
+                        $('#editUserEmail').val(data.email);
+                        $('#editUserFullName').val(data.full_name);
+                        $('#editUserRole').val(data.role);
+                        
+                        // Show/hide role-specific fields
+                        $('#editDepartmentField').toggle(data.role === 'FACULTY');
+                        $('#editRollNumberField').toggle(data.role === 'STUDENT');
+                        
+                        // Set role-specific values
+                        $('#editUserDepartment').val(data.department || '');
+                        $('#editUserRollNumber').val(data.roll_number || '');
+                    },
+                    error: handleApiError
+                });
+            });
+            
+            // Edit User Form Submission
+            $('#submitEditUser').click(function() {
+                const userId = $('#editUserId').val();
+                const userData = {
+                    email: $('#editUserEmail').val(),
+                    full_name: $('#editUserFullName').val(),
+                    role: $('#editUserRole').val()
+                };
+                
+                // Add department for faculty
+                if (userData.role === 'FACULTY' && $('#editUserDepartment').val()) {
+                    userData.department = $('#editUserDepartment').val();
+                }
+                
+                // Add roll number for students
+                if (userData.role === 'STUDENT' && $('#editUserRollNumber').val()) {
+                    userData.roll_number = $('#editUserRollNumber').val();
+                }
+                
+                $.ajax({
+                    url: `/api/v1/users/${userId}`,
+                    method: 'PUT',
+                    contentType: 'application/json',
+                    data: JSON.stringify(userData),
+                    success: function() {
+                        $('#editUserModal').modal('hide');
+                        loadUsers();
+                        showNotification('Success', 'User updated successfully!', 'success');
+                    },
+                    error: handleApiError
+                });
+            });
+            
+            // Delete User
+            $(document).on('click', '.delete-user', function() {
+                const userId = $(this).data('id');
+                if (confirm('Are you sure you want to delete this user?')) {
+                    $.ajax({
+                        url: `/api/v1/users/${userId}`,
+                        method: 'DELETE',
+                        success: function() {
+                            loadUsers();
+                            showNotification('Success', 'User deleted successfully!', 'success');
+                        },
+                        error: handleApiError
+                    });
+                }
+            });
+            
+            // Activate User
+            $(document).on('click', '.activate-user', function() {
+                const userId = $(this).data('id');
+                $.ajax({
+                    url: `/api/v1/users/${userId}/activate`,
+                    method: 'PUT',
+                    success: function() {
+                        loadUsers();
+                        showNotification('Success', 'User activated successfully!', 'success');
+                    },
+                    error: handleApiError
+                });
+            });
+            
+            // Deactivate User
+            $(document).on('click', '.deactivate-user', function() {
+                const userId = $(this).data('id');
+                $.ajax({
+                    url: `/api/v1/users/${userId}/deactivate`,
+                    method: 'PUT',
+                    success: function() {
+                        loadUsers();
+                        showNotification('Success', 'User deactivated successfully!', 'success');
+                    },
+                    error: handleApiError
+                });
+            });
+            
+            // Course Management
+            
+            // Add Course Form Submission
+            $('#submitAddCourse').click(function() {
+                const courseData = {
+                    course_code: $('#courseCode').val(),
+                    course_name: $('#courseName').val(),
+                    department: $('#courseDepartment').val() || null,
+                    description: $('#courseDescription').val() || null
+                };
+                
+                logDebug('Adding course with data:', courseData);
+                
+                $.ajax({
+                    url: '/api/v1/courses/',
+                    method: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(courseData),
+                    success: function() {
+                        $('#addCourseModal').modal('hide');
+                        $('#addCourseForm')[0].reset();
+                        
+                        // Explicitly trigger the courses tab to show and load data
+                        $('#courses-tab').tab('show');
+                        loadCourses();
+                        
+                        showNotification('Success', 'Course added successfully!', 'success');
+                    },
+                    error: handleApiError
+                });
+            });
+            
+            // Get Course for Editing
+            $(document).on('click', '.edit-course', function() {
+                const courseId = $(this).data('id');
+                
+                // Fetch course details
+                $.ajax({
+                    url: `/api/v1/courses/${courseId}`,
+                    method: 'GET',
+                    success: function(data) {
+                        // Populate form fields
+                        $('#editCourseId').val(data.id);
+                        $('#editCourseCode').val(data.course_code);
+                        $('#editCourseName').val(data.course_name);
+                        $('#editCourseDepartment').val(data.department || '');
+                        $('#editCourseDescription').val(data.description || '');
+                    },
+                    error: handleApiError
+                });
+            });
+            
+            // Edit Course Form Submission
+            $('#submitEditCourse').click(function() {
+                const courseId = $('#editCourseId').val();
+                const courseData = {
+                    course_code: $('#editCourseCode').val(),
+                    course_name: $('#editCourseName').val(),
+                    department: $('#editCourseDepartment').val() || null,
+                    description: $('#editCourseDescription').val() || null
+                };
+                
+                $.ajax({
+                    url: `/api/v1/courses/${courseId}`,
+                    method: 'PUT',
+                    contentType: 'application/json',
+                    data: JSON.stringify(courseData),
+                    success: function() {
+                        $('#editCourseModal').modal('hide');
+                        loadCourses();
+                        showNotification('Success', 'Course updated successfully!', 'success');
+                    },
+                    error: handleApiError
+                });
+            });
+            
+            // Delete Course
+            $(document).on('click', '.delete-course', function() {
+                const courseId = $(this).data('id');
+                if (confirm('Are you sure you want to delete this course?')) {
+                    $.ajax({
+                        url: `/api/v1/courses/${courseId}`,
+                        method: 'DELETE',
+                        success: function() {
+                            loadCourses();
+                            showNotification('Success', 'Course deleted successfully!', 'success');
+                        },
+                        error: handleApiError
+                    });
+                }
+            });
+            
+            // Room Management
+            
+            // Add Room Form Submission
+            $('#submitAddRoom').click(function() {
+                const roomData = {
+                    room_number: $('#roomNumber').val(),
+                    building: $('#roomBuilding').val() || null,
+                    capacity: $('#roomCapacity').val() ? parseInt($('#roomCapacity').val()) : null,
+                    description: $('#roomDescription').val() || null
+                };
+                
+                logDebug('Adding room with data:', roomData);
+                
+                $.ajax({
+                    url: '/api/v1/rooms/',
+                    method: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(roomData),
+                    success: function() {
+                        $('#addRoomModal').modal('hide');
+                        $('#addRoomForm')[0].reset();
+                        
+                        // Explicitly trigger the rooms tab to show and load data
+                        $('#rooms-tab').tab('show');
+                        loadRooms();
+                        
+                        showNotification('Success', 'Room added successfully!', 'success');
+                    },
+                    error: handleApiError
+                });
+            });
+            
+            // Get Room for Editing
+            $(document).on('click', '.edit-room', function() {
+                const roomId = $(this).data('id');
+                
+                // Fetch room details
+                $.ajax({
+                    url: `/api/v1/rooms/${roomId}`,
+                    method: 'GET',
+                    success: function(data) {
+                        // Populate form fields
+                        $('#editRoomId').val(data.id);
+                        $('#editRoomNumber').val(data.room_number);
+                        $('#editRoomBuilding').val(data.building || '');
+                        $('#editRoomCapacity').val(data.capacity || '');
+                        $('#editRoomDescription').val(data.description || '');
+                    },
+                    error: handleApiError
+                });
+            });
+            
+            // Edit Room Form Submission
+            $('#submitEditRoom').click(function() {
+                const roomId = $('#editRoomId').val();
+                const roomData = {
+                    room_number: $('#editRoomNumber').val(),
+                    building: $('#editRoomBuilding').val() || null,
+                    capacity: $('#editRoomCapacity').val() ? parseInt($('#editRoomCapacity').val()) : null,
+                    description: $('#editRoomDescription').val() || null
+                };
+                
+                $.ajax({
+                    url: `/api/v1/rooms/${roomId}`,
+                    method: 'PUT',
+                    contentType: 'application/json',
+                    data: JSON.stringify(roomData),
+                    success: function() {
+                        $('#editRoomModal').modal('hide');
+                        loadRooms();
+                        showNotification('Success', 'Room updated successfully!', 'success');
+                    },
+                    error: handleApiError
+                });
+            });
+            
+            // Delete Room
+            $(document).on('click', '.delete-room', function() {
+                const roomId = $(this).data('id');
+                if (confirm('Are you sure you want to delete this room?')) {
+                    $.ajax({
+                        url: `/api/v1/rooms/${roomId}`,
+                        method: 'DELETE',
+                        success: function() {
+                            loadRooms();
+                            showNotification('Success', 'Room deleted successfully!', 'success');
+                        },
+                        error: handleApiError
+                    });
+                }
+            });
+            
+            // Assignment Management
+            
+            // Add Assignment Form Submission
+            $('#submitAddAssignment').click(function() {
+                // Get selected days
+                const selectedDays = [];
+                $('.day-checkbox:checked').each(function() {
+                    selectedDays.push($(this).val());
+                });
+                
+                const assignmentData = {
+                    faculty_id: $('#assignmentFaculty').val(),
+                    course_id: $('#assignmentCourse').val(),
+                    room_id: $('#assignmentRoom').val(),
+                    day_of_week: selectedDays.length > 0 ? selectedDays.join(',') : null,
+                    time_slot: $('#assignmentTime').val() || null
+                };
+                
+                // Validate required fields
+                if (!assignmentData.faculty_id || !assignmentData.course_id || !assignmentData.room_id) {
+                    showNotification('Error', 'Faculty, Course, and Room are required fields', 'danger');
+                    return;
+                }
+                
+                logDebug('Adding assignment with data:', assignmentData);
+                
+                $.ajax({
+                    url: '/api/v1/assignments/',
+                    method: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(assignmentData),
+                    success: function() {
+                        $('#addAssignmentModal').modal('hide');
+                        $('#addAssignmentForm')[0].reset();
+                        $('.day-checkbox').prop('checked', false);  // Uncheck all day checkboxes
+                        
+                        // Explicitly activate the assignments tab to reload data
+                        $('#assignments-tab').tab('show');
+                        loadAssignments();
+                        
+                        showNotification('Success', 'Assignment added successfully!', 'success');
+                    },
+                    error: handleApiError
+                });
+            });
+            
+            // Get Assignment for Editing
+            $(document).on('click', '.edit-assignment', function() {
+                const assignmentId = $(this).data('id');
+                
+                // Make sure faculty, course, and room data is loaded
+                $.when(
+                    $.ajax({
+                        url: '/api/v1/users/',
+                        method: 'GET'
+                    }),
+                    $.ajax({
+                        url: '/api/v1/courses/',
+                        method: 'GET'
+                    }),
+                    $.ajax({
+                        url: '/api/v1/rooms/',
+                        method: 'GET'
+                    })
+                ).done(function(usersResponse, coursesResponse, roomsResponse) {
+                    // Extract faculty users
+                    const facultyUsers = usersResponse[0].users.filter(user => 
+                        user.role === 'FACULTY' && user.is_active
+                    );
+                    
+                    // Update dropdowns
+                    updateFacultyDropdowns(facultyUsers);
+                    updateCourseDropdowns(coursesResponse[0].courses);
+                    updateRoomDropdowns(roomsResponse[0].rooms);
+                
+                    // Fetch assignment details
+                    $.ajax({
+                    url: `/api/v1/assignments/${assignmentId}`,
+                    method: 'GET',
+                    success: function(data) {
+                        // Populate form fields
+                        $('#editAssignmentId').val(data.id);
+                        $('#editAssignmentFaculty').val(data.faculty_id);
+                        $('#editAssignmentCourse').val(data.course_id);
+                        $('#editAssignmentRoom').val(data.room_id);
+                        $('#editAssignmentTime').val(data.time_slot || '');
+                        
+                        // Clear all checkboxes first
+                        $('.edit-day-checkbox').prop('checked', false);
+                        
+                        // Check the appropriate day checkboxes
+                        if (data.day_of_week) {
+                            const days = data.day_of_week.split(',');
+                            days.forEach(day => {
+                                $(`#editDay${day}`).prop('checked', true);
+                            });
+                        }
+                    },
+                    error: handleApiError
+                });
+                }).fail(function(error) {
+                    console.error("Error loading data for edit assignment:", error);
+                    handleApiError(error);
+                });
+            });
+            
+            // Edit Assignment Form Submission
+            $('#submitEditAssignment').click(function() {
+                // Get selected days
+                const selectedDays = [];
+                $('.edit-day-checkbox:checked').each(function() {
+                    selectedDays.push($(this).val());
+                });
+                
+                const assignmentId = $('#editAssignmentId').val();
+                const assignmentData = {
+                    faculty_id: $('#editAssignmentFaculty').val(),
+                    course_id: $('#editAssignmentCourse').val(),
+                    room_id: $('#editAssignmentRoom').val(),
+                    day_of_week: selectedDays.length > 0 ? selectedDays.join(',') : null,
+                    time_slot: $('#editAssignmentTime').val() || null
+                };
+                
+                // Validate required fields
+                if (!assignmentData.faculty_id || !assignmentData.course_id || !assignmentData.room_id) {
+                    showNotification('Error', 'Faculty, Course, and Room are required fields', 'danger');
+                    return;
+                }
+                
+                $.ajax({
+                    url: `/api/v1/assignments/${assignmentId}`,
+                    method: 'PUT',
+                    contentType: 'application/json',
+                    data: JSON.stringify(assignmentData),
+                    success: function() {
+                        $('#editAssignmentModal').modal('hide');
+                        loadAssignments();
+                        showNotification('Success', 'Assignment updated successfully!', 'success');
+                    },
+                    error: handleApiError
+                });
+            });
+            
+            // Delete Assignment
+            $(document).on('click', '.delete-assignment', function() {
+                const assignmentId = $(this).data('id');
+                if (confirm('Are you sure you want to delete this assignment?')) {
+                    $.ajax({
+                        url: `/api/v1/assignments/${assignmentId}`,
+                        method: 'DELETE',
+                        success: function() {
+                            loadAssignments();
+                            showNotification('Success', 'Assignment deleted successfully!', 'success');
+                        },
+                        error: handleApiError
+                    });
+                }
+            });
+        });
+    </script>
+</body>
+</html>
