@@ -10,15 +10,20 @@ from app.models.user import UserRole
 
 router = APIRouter()
 
-@router.get("/", response_model=UserList)
-def get_users(
-    role: UserRole = None,
+@router.get("/{user_id}", response_model=User)
+def get_user(
+    user_id: uuid.UUID,
     db: Session = Depends(get_db)
 ) -> Any:
-    """Get all users, optionally filtered by role"""
+    """Get user by ID"""
     user_service = UserService(db)
-    users = user_service.get_users(role)
-    return {"users": users}
+    user = user_service.get_user(str(user_id))  # Convert UUID to string
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+    return user
 
 @router.get("/me", response_model=User)
 def get_user_me(
@@ -31,20 +36,17 @@ def get_user_me(
     admin = admin_users[0]
     return admin
 
-@router.get("/{user_id}", response_model=User)
-def get_user(
-    user_id: uuid.UUID,
+@router.get("/", response_model=UserList)
+def get_users(
+    role: UserRole = None,
+    skip: int = 0,
+    limit: int = 100,
     db: Session = Depends(get_db)
 ) -> Any:
-    """Get user by ID"""
+    """Get all users, optionally filtered by role"""
     user_service = UserService(db)
-    user = user_service.get_user(user_id)
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found"
-        )
-    return user
+    users = user_service.get_users(role, skip, limit)
+    return {"users": users}
 
 @router.post("/", response_model=User)
 def create_user(
@@ -71,7 +73,7 @@ def update_user(
 ) -> Any:
     """Update user"""
     user_service = UserService(db)
-    user = user_service.update_user(user_id, user_in)
+    user = user_service.update_user(str(user_id), user_in)  # Convert UUID to string
     if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -86,7 +88,7 @@ def delete_user(
 ) -> Any:
     """Delete user"""
     user_service = UserService(db)
-    result = user_service.delete_user(user_id)
+    result = user_service.delete_user(str(user_id))  # Convert UUID to string
     if not result:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -101,7 +103,7 @@ def activate_user(
 ) -> Any:
     """Activate user"""
     user_service = UserService(db)
-    user = user_service.activate_user(user_id)
+    user = user_service.activate_user(str(user_id))  # Convert UUID to string
     if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -116,7 +118,7 @@ def deactivate_user(
 ) -> Any:
     """Deactivate user"""
     user_service = UserService(db)
-    user = user_service.deactivate_user(user_id)
+    user = user_service.deactivate_user(str(user_id))  # Convert UUID to string
     if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

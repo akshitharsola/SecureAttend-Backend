@@ -21,9 +21,15 @@ class UserService:
         """Get user by email"""
         return self.db.query(User).filter(User.email == email).first()
     
-    def get_users(self, skip: int = 0, limit: int = 100) -> List[User]:
-        """Get all users"""
-        return self.db.query(User).offset(skip).limit(limit).all()
+    def get_users(self, role=None, skip: int = 0, limit: int = 100) -> List[User]:
+        """Get all users, optionally filtered by role"""
+        query = self.db.query(User)
+        
+        # Add filter by role if provided
+        if role is not None:
+            query = query.filter(User.role == role)
+            
+        return query.offset(skip).limit(limit).all()
     
     # app/services/user.py - Update the create_user method
     def create_user(self, user_in: UserCreate) -> User:
